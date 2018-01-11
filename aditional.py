@@ -7,7 +7,7 @@ def split_strTab_to_int(tab):
     return [int(el ,16)for el in temp_tab]
 
 def create_datetime(min,hours,days,months,years):
-    return datetime.datetime(minute=min,hours=hours,second=0,day=days,month=months,year=years)
+    return datetime.datetime(second=0,minute=min,hour=hours,day=days,month=months,year=years)
 
 def date_time_now():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f") + " "
@@ -65,8 +65,12 @@ def locate_unpack_timestamp(int_tab):
     else:
         print("Zbyt krotka ramka - nie znaleziono timestampa")
 
-def pack_SN_or_timestamp(int_list):
-    return [el for el in pack_for_bytes(int_list)]
+def pack_SN_or_timestamp(integer):
+    return [el for el in pack_for_bytes(integer)]
+
+#timestamp in seconds
+def form_timestamp_from_dtime(date_time):
+    return int((date_time - data_time_zero()).total_seconds())
 
 
 
