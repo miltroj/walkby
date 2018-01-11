@@ -23,3 +23,7 @@ class Port(object):
                 # print("%s %r" % (date_time_now(), returned))
                 parse_frames_with_date(returned)
                 return returned
+
+    def write(self, frame):
+        self.serial_opened.flushInput()
+        self.serial_opened.write(frame)
