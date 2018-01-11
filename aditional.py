@@ -15,6 +15,16 @@ def date_time_now():
 def data_time_zero():
     return datetime.datetime(minute=0,second=0,day=1,month=1,year=2000)
 
+#region split_datetime
+
+def month_datetime(datetime):
+    year    = int(datetime.strftime("%Y"))
+    month   = int(datetime.strftime("%m"))
+    day     = int(datetime.strftime("%d"))
+    hour    = int(datetime.strftime("%H"))
+    minute  = int(datetime.strftime("%M"))
+    return year, month, day, hour,minute
+#endregion
 
 
 
@@ -38,6 +48,8 @@ def parse_frames_with_date(table):
 def cut_sn(int_tab):
     if len(int_tab) > 7:
         return int_tab[3:7]
+    elif len(int_tab) == 4:
+        return int_tab
     return None
 
 def cut_timestamp(int_tab):
@@ -57,6 +69,7 @@ def locate_unpack_SN(int_tab):
         return unpack_four_bytes(temp_tab)
     else:
         print("Zbyt krotka ramka - nie odczytano numeru SN")
+        return None
 
 def locate_unpack_timestamp(int_tab):
     temp_tab = cut_timestamp(int_tab)
@@ -64,12 +77,14 @@ def locate_unpack_timestamp(int_tab):
         return unpack_four_bytes(temp_tab)
     else:
         print("Zbyt krotka ramka - nie znaleziono timestampa")
+        return None
 
 def pack_SN_or_timestamp(integer):
     return [el for el in pack_for_bytes(integer)]
 
 #timestamp in seconds
 def form_timestamp_from_dtime(date_time):
+    print(date_time)
     return int((date_time - data_time_zero()).total_seconds())
 
 
@@ -106,3 +121,5 @@ if __name__ == "__main__":
     print("%r" %timestamp_table)
 
     print("packed sn %r" %pack_SN_or_timestamp(2000023150))
+
+    print(month_datetime(datetime.datetime.now()))
