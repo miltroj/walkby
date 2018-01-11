@@ -1,4 +1,3 @@
-import datetime
 from aditional import *
 
 class Generate_time(object):
@@ -43,7 +42,12 @@ class Generate_time(object):
             self.fifht_day()
         elif self.day == self.fifht_day():
             self.jump_to_next_month()
-        print(create_datetime(self.minute,self.hour,self.day,self.month,self.year))
+        args = self.minute,self.hour,self.day,self.month,self.year
+        print("Wygenerowano nowy timestamp %s" %create_datetime(*args))
+        return create_datetime(*args)
+
+    def next_border_timestemp(self):
+        return form_timestamp_from_dtime( self.next_day() ) # zwraca roznice w sekundach pomiedzy 2000 a aktualna data roznicy
 
 if __name__ == "__main__":
     time_window = Generate_time(2018,1,1)
