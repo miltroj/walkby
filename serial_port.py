@@ -20,5 +20,6 @@ class Port(object):
                         break
                     readed = self.serial_opened.read(1)
                     returned.append(  ord(readed) )
-                print("%s %r" % (date_time_now(), returned))
+                # print("%s %r" % (date_time_now(), returned))
+                parse_frames_with_date(returned)
                 return returned

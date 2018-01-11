@@ -3,11 +3,11 @@ from aditional import *
 
 
 
-port = Port('COM3')
+port = Port('COM7')
 
 
 while True:
 
 
     frame = port.read_frames()
-    int_to_hex_string_(frame)
+    # int_to_hex_string_(frame)

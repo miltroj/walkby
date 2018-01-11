@@ -1,8 +1,22 @@
 import datetime
+from struct import *
 
+
+def split_strTab_to_int(tab):
+    temp_tab = tab.split(' ')
+    return [int(el ,16)for el in temp_tab]
+
+def create_datetime(min,hours,days,months,years):
+    return datetime.datetime(minute=min,hours=hours,second=0,day=days,month=months,year=years)
 
 def date_time_now():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f") + " "
+
+def data_time_zero():
+    return datetime.datetime(minute=0,second=0,day=1,month=1,year=2000)
+
+
+
 
 def int_to_hex_string(list):
     temp_retunr = ''
@@ -13,5 +27,78 @@ def int_to_hex_string(list):
 
 def int_to_hex_string_(table):
     temp =  ' '.join(format(s,'02x') for s in table).upper()
-    print(temp)
+    # print(temp)
     return temp
+
+def parse_frames_with_date(table):
+    temp_string = date_time_now() + int_to_hex_string_(table)
+    print(temp_string)
+    return temp_string
+
+def cut_sn(int_tab):
+    if len(int_tab) > 7:
+        return int_tab[3:7]
+    return None
+
+def cut_timestamp(int_tab):
+    if len(int_tab) > 11:
+        return int_tab[7:11]
+    return None
+
+def unpack_four_bytes(four_int_tab):
+    return unpack(">I", bytearray(four_int_tab))[0]
+
+def pack_for_bytes(integer):
+    return bytearray( pack(">I", integer) )
+
+def locate_unpack_SN(int_tab):
+    temp_tab = cut_sn(int_tab)
+    if temp_tab is not None:
+        return unpack_four_bytes(temp_tab)
+    else:
+        print("Zbyt krotka ramka - nie odczytano numeru SN")
+
+def locate_unpack_timestamp(int_tab):
+    temp_tab = cut_timestamp(int_tab)
+    if temp_tab is not None:
+        return unpack_four_bytes(temp_tab)
+    else:
+        print("Zbyt krotka ramka - nie znaleziono timestampa")
+
+def pack_SN_or_timestamp(int_list):
+    return [el for el in pack_for_bytes(int_list)]
+
+
+
+if __name__ == "__main__":
+
+    frame_sample = '3E A2 0B 77 35 EE 6E 21 E9 E5 65 31 12 06 F0 10 E6 00 12 FB FC 00 DB DB 10 5B 10 6D 00 50 00 00 84 80 00 33 10 10 10 00 00 00 23 00 00 00 10 04 10 2B 00 00 3C 00 02 00 01 E9 10 E8 10 00 A0'
+
+    list_of_bytes = split_strTab_to_int(frame_sample)
+
+    print("%r" %list_of_bytes)
+    print("%r" %cut_timestamp(list_of_bytes))
+
+    print("Rozpakowany SN %r" %locate_unpack_SN(list_of_bytes))
+    seconds_from_timestamp = locate_unpack_timestamp(list_of_bytes)
+    print("Rozpakowany timestamp w sekundach %r" %seconds_from_timestamp)
+
+
+    data_czas =datetime.datetime(minute=0,second=0,day=1,month=1,year=2000)
+    print(data_czas)
+    time_delta = datetime.timedelta(seconds=seconds_from_timestamp)
+    print(time_delta)
+
+    actual_time = time_delta + data_czas
+    print(actual_time)
+
+    to_timestamp = actual_time - data_czas
+    print(int(to_timestamp.total_seconds()))
+    timestamp_to_pack = int(to_timestamp.total_seconds())
+    packed = pack_for_bytes(timestamp_to_pack)
+    print(" ".join( format(hex(el)) for el in packed))
+
+    timestamp_table = [el for el in packed]
+    print("%r" %timestamp_table)
+
+    print("packed sn %r" %pack_SN_or_timestamp(2000023150))
