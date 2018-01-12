@@ -12,8 +12,29 @@ def create_datetime(min,hours,days,months,years):
 def date_time_now():
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S:%f") + " "
 
+def date_time_now_short():
+    return datetime.datetime.now().strftime("%Y-%m-%d") + " "
+
 def data_time_zero():
     return datetime.datetime(minute=0,second=0,day=1,month=1,year=2000)
+
+def log_to_file_write(func):
+    def func_wrapper(self, frame):
+        temp_frame_string = " ".join(format(byteInt, '02x') for byteInt in frame).upper()
+        with open("log/loger-{}.txt".format(date_time_now_short()), 'a') as file:
+            file.write(date_time_now() + " SND " + temp_frame_string + "\n")
+        return func(self , frame)
+    return func_wrapper
+
+def log_to_file_read(func):
+    def func_wrapper(self):
+        temp_func_return = func(self)
+        if temp_func_return is not None:
+            temp_frame_string = " ".join(format(byteInt, '02x') for byteInt in temp_func_return).upper()
+            with open("log/loger-{}.txt".format(date_time_now_short()), 'a') as file:
+                file.write(date_time_now() + " RCV " + temp_frame_string + "\n")
+        return temp_func_return
+    return func_wrapper
 
 #region split_datetime
 
@@ -87,7 +108,18 @@ def form_timestamp_from_dtime(date_time):
     print(date_time)
     return int((date_time - data_time_zero()).total_seconds())
 
+def convert_frame_to_char(list_of_int):
+    frame = ''
+    for element in list_of_int:
+        frame += chr(element)
+    # print "%r" %frame
+    return frame
 
+def is_propper_SN_in_the_list(frame , SN_list):
+    if locate_unpack_SN(frame) in SN_list:
+        return True
+    else:
+        return False
 
 if __name__ == "__main__":
 

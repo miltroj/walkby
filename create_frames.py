@@ -52,7 +52,7 @@ class Create_frames(object):
         if self.is_propper_SN(frame_int_list):
             # if self.check_frame_timestamp(frame_int_list) > self.start_time_timestamp_rw_seconds and self.send_only_once:  chyba niepotrzebny warunek
             if self.check_frame_timestamp(frame_int_list) > self.start_time_timestamp_rw_seconds:
-                # self.Port_COM_Class.write(self.frame)
+                self.Port_COM_Class.write(self.frame)
                 self.create_new_border()
                 self.send_only_once = False # wysylam tylko raz zeby nie powtarzal bo bedzie wysylal ramka za ramka poniewaz powyzszy if bedzie zawsze spelniony
             else:

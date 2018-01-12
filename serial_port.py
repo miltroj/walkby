@@ -6,8 +6,9 @@ class Port(object):
     def __init__(self, port_Com):
         self.COM_port = port_Com
         self.serial_opened = serial.Serial(self.COM_port, baudrate=11520, dsrdtr = True, timeout=.1)
+        self.filtered_SN = [2000004927]
 
-
+    @log_to_file_read
     def read_frames(self):
         while True:
             returned = []
@@ -21,9 +22,15 @@ class Port(object):
                     readed = self.serial_opened.read(1)
                     returned.append(  ord(readed) )
                 # print("%s %r" % (date_time_now(), returned))
-                parse_frames_with_date(returned)
-                return returned
+                # parse_frames_with_date(returned)
+                if is_propper_SN_in_the_list(returned , self.filtered_SN):
+                    parse_frames_with_date(returned)
+                    return returned
 
+    @log_to_file_write
     def write(self, frame):
+        temp_char_frame = convert_frame_to_char(frame)
         self.serial_opened.flushInput()
-        self.serial_opened.write(frame)
+        self.serial_opened.write(temp_char_frame)
+        print("\nWyslano ramke")
+        parse_frames_with_date(frame)
