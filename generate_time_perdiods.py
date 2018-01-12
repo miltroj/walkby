@@ -38,6 +38,8 @@ class Generate_time(object):
     def next_day(self):
         if self.day == 1:
             self.first_day_of_month()
+        elif self.day == 2:
+            self.first_day_of_month()
         elif self.day == 5:
             self.fifht_day()
         elif self.day == self.fifht_day():

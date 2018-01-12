@@ -8,18 +8,29 @@ class Create_frames(object):
         self.start_time_timestamp_rw_seconds = form_timestamp_from_dtime(  start_time )
         self.nex_day_rw_seconds = self.start_time_timestamp_rw_seconds + 5*60 #ustawia nastepny dzien na 5 min pozniej
         self.adress = 0xDD
+        self.key = 0x20
+        self.OMT = 30
         args = month_datetime(start_time) #krotka
         self.GeneratePeriods = Generate_time(*args)
         self.Port_COM_Class = Port_COM_class
 
         self.send_only_once = True
+        self.first_frame = True
 
         #region FRAME
 
+        # self.frame = [0x3D ,0xFF ,0x16 ,self.sn[0] ,self.sn[1] ,self.sn[2] ,self.sn[3] ,0x20
+        #     ,0x01 ,0x99 ,0x54 ,0x31 ,0x12 ,0x15 ,0x05 ,0x15 ,0x09
+        #     ,0x01 ,0x09 ,0x31 ,0x03 ,0x17 ,0x01 ,0x01 ,0x00 ,0x24
+        #     ,0x7F ,self.OMT ,self.key ,self.key ,0x28 ,0x8C ,0x17 ,0x03 ,0x19
+        #     ,0x04 ,0x03 ,0x55 ,0x02 ,0x01 ,0x32 ,0x00 ,0x00 ,0x00
+        #     ,0x01 ,self.adress ,0x00 ,0x03 ,0x17 ,0x04 ,0x22 ,0x11 ,0x10
+        #     ,0x0F ,0x4E ,0x20 ,0x13 ,0x88 ,0x82 ,0x64 ,0x66 ,0x09]
+
         self.frame = [0x3D ,0xFF ,0x16 ,self.sn[0] ,self.sn[1] ,self.sn[2] ,self.sn[3] ,0x1F
-            ,0xFC ,0x54 ,0x08 ,0x31 ,0x12 ,0x15 ,0x05 ,0x15 ,0x09
+            ,0xFC ,0x53 ,0x54 ,0x31 ,0x12 ,0x15 ,0x05 ,0x15 ,0x09
             ,0x01 ,0x09 ,0x31 ,0x03 ,0x17 ,0x01 ,0x01 ,0x00 ,0x24
-            ,0x7F ,0x14 ,0x00 ,0x00 ,0x28 ,0x8C ,0x17 ,0x03 ,0x19
+            ,0x7F ,self.OMT ,self.key ,self.key ,0x28 ,0x8C ,0x17 ,0x03 ,0x19
             ,0x04 ,0x03 ,0x55 ,0x02 ,0x01 ,0x32 ,0x00 ,0x00 ,0x00
             ,0x01 ,self.adress ,0x00 ,0x03 ,0x17 ,0x04 ,0x22 ,0x11 ,0x10
             ,0x0F ,0x4E ,0x20 ,0x13 ,0x88 ,0x82 ,0x64 ,0x66 ,0x09]
@@ -50,14 +61,18 @@ class Create_frames(object):
 
     def check_if_time_to_send(self, frame_int_list):
         if self.is_propper_SN(frame_int_list):
-            # if self.check_frame_timestamp(frame_int_list) > self.start_time_timestamp_rw_seconds and self.send_only_once:  chyba niepotrzebny warunek
-            if self.check_frame_timestamp(frame_int_list) > self.start_time_timestamp_rw_seconds:
+
+            if self.first_frame: # wysylam pierwsza ramke 23:55 01.01.2017
                 self.Port_COM_Class.write(self.frame)
+                self.first_frame = False
+            # if self.check_frame_timestamp(frame_int_list) > self.start_time_timestamp_rw_seconds and self.send_only_once:  chyba niepotrzebny warunek
+            elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds:
                 self.create_new_border()
+                self.Port_COM_Class.write(self.frame)
                 self.send_only_once = False # wysylam tylko raz zeby nie powtarzal bo bedzie wysylal ramka za ramka poniewaz powyzszy if bedzie zawsze spelniony
             else:
                 self.send_only_once = True
-                print("oczekuje wyzszego timestampa")
+                print("%r oczekuje wyzszego timestampa" %locate_unpack_SN(frame_int_list))
         else:
             print("poza")
 
@@ -87,9 +102,11 @@ if __name__ == "__main__":
     #
     # print(int_to_hex_string_(create_frame.frame))
 
-    for i in range(7):
-        create_frame.check_if_time_to_send(list_of_bytes)
-        print(int_to_hex_string_(create_frame.frame))
+    # for i in range(7):
+    #     create_frame.check_if_time_to_send(list_of_bytes)
+    #     print(int_to_hex_string_(create_frame.frame))
+    #
+    # create_frame.check_if_time_to_send(list_of_bytes_higher)
+    # print(int_to_hex_string_(create_frame.frame))
 
-    create_frame.check_if_time_to_send(list_of_bytes_higher)
-    print(int_to_hex_string_(create_frame.frame))
+    print(create_frame.frame[28:30])

@@ -118,6 +118,8 @@ def convert_frame_to_char(list_of_int):
 def is_propper_SN_in_the_list(frame , SN_list):
     if locate_unpack_SN(frame) in SN_list:
         return True
+    elif len(SN_list) == 0:
+        return True
     else:
         return False
 
@@ -155,3 +157,11 @@ if __name__ == "__main__":
     print("packed sn %r" %pack_SN_or_timestamp(2000023150))
 
     print(month_datetime(datetime.datetime.now()))
+
+    arg = 55, 23, 1, 1, 2017
+    piaty_start = pack_for_bytes(  form_timestamp_from_dtime(create_datetime(*arg)))
+
+    print ("%r" %piaty_start)
+
+    for el in piaty_start:
+        print("%r" %hex(el))
