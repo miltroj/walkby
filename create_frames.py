@@ -6,11 +6,11 @@ class Create_frames(object):
     def __init__(self,int_SN, start_time, Port_COM_class=None):
         self.sn = pack_SN_or_timestamp(int_SN)
         self.start_time_timestamp_rw_seconds = form_timestamp_from_dtime(  start_time )
-        self.nex_day_rw_seconds = self.start_time_timestamp_rw_seconds + 5*60 #ustawia nastepny dzien na 5 min pozniej
-        self.adress = 0xDD
-        self.key = 0x20
+        self.nex_day_rw_seconds = self.start_time_timestamp_rw_seconds + 5*60
+        self.adress = 0xAA
+        self.key = 0x10
         self.OMT = 30
-        args = month_datetime(start_time) #krotka
+        args = month_datetime(start_time)
         self.GeneratePeriods = Generate_time(*args)
         self.Port_COM_Class = Port_COM_class
 
@@ -43,9 +43,10 @@ class Create_frames(object):
         self.nex_day_rw_seconds = self.start_time_timestamp_rw_seconds + 5 * 60
 
     def create_new_border(self):
-        self.start_time_timestamp_rw_seconds = self.GeneratePeriods.next_border_timestemp() #przypisania nowego dnia do wyslania
-        self.add_timestamp_border() # nowa roznica piecio minutowa
-        self.insert_timestamp_toFrame_bytes() # wprowadzenie zmian do ramki - zbudowanie nowej ramki
+        self.start_time_timestamp_rw_seconds = self.GeneratePeriods.next_border_timestemp()
+        self.add_timestamp_border()
+        self.insert_timestamp_toFrame_bytes()
+
 
     def is_propper_SN(self,frame):
         # print(locate_unpack_SN(frame))
@@ -62,14 +63,15 @@ class Create_frames(object):
     def check_if_time_to_send(self, frame_int_list):
         if self.is_propper_SN(frame_int_list):
 
-            if self.first_frame: # wysylam pierwsza ramke 23:55 01.01.2017
+            if self.first_frame:
+                self.insert_timestamp_toFrame_bytes()
                 self.Port_COM_Class.write(self.frame)
                 self.first_frame = False
             # if self.check_frame_timestamp(frame_int_list) > self.start_time_timestamp_rw_seconds and self.send_only_once:  chyba niepotrzebny warunek
             elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds:
                 self.create_new_border()
                 self.Port_COM_Class.write(self.frame)
-                self.send_only_once = False # wysylam tylko raz zeby nie powtarzal bo bedzie wysylal ramka za ramka poniewaz powyzszy if bedzie zawsze spelniony
+                self.send_only_once = False
             else:
                 self.send_only_once = True
                 print("%r oczekuje wyzszego timestampa" %locate_unpack_SN(frame_int_list))

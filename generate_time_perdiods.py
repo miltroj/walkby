@@ -36,11 +36,11 @@ class Generate_time(object):
             self.day = 1
 
     def next_day(self):
-        if self.day == 1:
+        if 2>self.day >= 1:
             self.first_day_of_month()
-        elif self.day == 2:
+        elif 5>self.day >= 2:
             self.first_day_of_month()
-        elif self.day == 5:
+        elif self.fifht_day() >self.day >= 5:
             self.fifht_day()
         elif self.day == self.fifht_day():
             self.jump_to_next_month()
