@@ -32,6 +32,6 @@ class Port(object):
         temp_char_frame = convert_frame_to_char(frame)
         self.serial_opened.flushInput()
         self.serial_opened.write(temp_char_frame)
-        print("\nWyslano ramke")
+        print("\nWyslano ramke do dongla")
         parse_frames_with_date(frame)
-        print("------------------------------------------------------------------------------------\n")
+        print("------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n")

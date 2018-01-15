@@ -2,7 +2,7 @@ from aditional import *
 
 class Generate_time(object):
 
-    def __init__(self,year,month,day,hour=23,minute=55):
+    def __init__(self,year,month,day,hour=23,minute=55): #
         self.year = year
         self.month = month
         self.day = day
@@ -19,11 +19,13 @@ class Generate_time(object):
     def first_day_of_month(self):
         self.day = 5
         self.hour = 23
-        self.minute= 55
+        self.minute= self.minute
 
     def fifht_day(self):
-        daysInMonthDics = {1: 31, 2: self.checkFebruary(), 3:31, 4:30, 5:31 , 6:30, 7:30, 8:31, 9:30, 10:31, 11:30, 12:31}
+        daysInMonthDics = {1: 31, 2: self.checkFebruary(), 3:31, 4:30, 5:31 , 6:30, 7:31, 8:31, 9:30, 10:31, 11:30, 12:31}
         self.day = daysInMonthDics[self.month]
+        self.hour = 23
+        self.minute= self.minute
         return daysInMonthDics[self.month]
 
     def jump_to_next_month(self):
@@ -35,12 +37,35 @@ class Generate_time(object):
             self.year += 1
             self.day = 1
 
+    # def next_day(self):
+    #     if 2>self.day >= 1:
+    #         self.first_day_of_month()
+    #     elif 5>self.day >= 2:
+    #         self.first_day_of_month()
+    #     elif self.fifht_day() >self.day >= 5:
+    #         self.fifht_day()
+    #     elif self.day == self.fifht_day():
+    #         self.jump_to_next_month()
+    #     args = self.minute,self.hour,self.day,self.month,self.year
+    #     print("Wygenerowano nowy timestamp %s" %create_datetime(*args))
+    #     return create_datetime(*args)
+
+    # #ok
+    # def next_day(self):
+    #     if  self.day == 1:
+    #         self.first_day_of_month()
+    #     elif self.day == 5:
+    #         self.fifht_day()
+    #     elif self.day == self.fifht_day():
+    #         self.jump_to_next_month()
+    #     args = self.minute,self.hour,self.day,self.month,self.year
+    #     print("Wygenerowano nowy timestamp %s" %create_datetime(*args))
+    #     return create_datetime(*args)
+
     def next_day(self):
-        if 2>self.day >= 1:
+        if 1 <= self.day < 5:
             self.first_day_of_month()
-        elif 5>self.day >= 2:
-            self.first_day_of_month()
-        elif self.fifht_day() >self.day >= 5:
+        elif 5 <= self.day < self.fifht_day():
             self.fifht_day()
         elif self.day == self.fifht_day():
             self.jump_to_next_month()
@@ -54,5 +79,7 @@ class Generate_time(object):
 if __name__ == "__main__":
     time_window = Generate_time(2018,1,1)
 
-    for i in range(15):
+    for i in range(3*12):
         time_window.next_day()
+
+

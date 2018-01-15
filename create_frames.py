@@ -4,18 +4,20 @@ from generate_time_perdiods import *
 class Create_frames(object):
 
     def __init__(self,int_SN, start_time, Port_COM_class=None):
+        self.delta = 5*60 #
         self.sn = pack_SN_or_timestamp(int_SN)
         self.start_time_timestamp_rw_seconds = form_timestamp_from_dtime(  start_time )
-        self.nex_day_rw_seconds = self.start_time_timestamp_rw_seconds + 5*60
+        self.nex_day_rw_seconds = self.start_time_timestamp_rw_seconds + self.delta
         self.adress = 0xAA
-        self.key = 0x10
+        self.key = 0x20
         self.OMT = 30
         args = month_datetime(start_time)
         self.GeneratePeriods = Generate_time(*args)
         self.Port_COM_Class = Port_COM_class
 
-        self.send_only_once = True
+        self.send_only_once = False
         self.first_frame = True
+        self.first_frame_ack=True
 
         #region FRAME
 
@@ -27,20 +29,30 @@ class Create_frames(object):
         #     ,0x01 ,self.adress ,0x00 ,0x03 ,0x17 ,0x04 ,0x22 ,0x11 ,0x10
         #     ,0x0F ,0x4E ,0x20 ,0x13 ,0x88 ,0x82 ,0x64 ,0x66 ,0x09]
 
+        # self.frame = [0x3D ,0xFF ,0x16 ,self.sn[0] ,self.sn[1] ,self.sn[2] ,self.sn[3] ,0x1F
+        #     ,0xFC ,0x53 ,0x54 ,0x31 ,0x12 ,0x15 ,0x05 ,0x15 ,0x09
+        #     ,0x01 ,0x09 ,0x31 ,0x03 ,0x17 ,0x01 ,0x01 ,0x00 ,0x24
+        #     ,0x7F ,self.OMT ,self.key ,self.key ,0x28 ,0x8C ,0x17 ,0x03 ,0x19
+        #     ,0x04 ,0x03 ,0x55 ,0x02 ,0x01 ,0x32 ,0x00 ,0x00 ,0x00
+        #     ,0x01 ,self.adress ,0x00 ,0x03 ,0x17 ,0x04 ,0x22 ,0x11 ,0x10
+        #     ,0x0F ,0x4E ,0x20 ,0x13 ,0x88 ,0x82 ,0x64 ,0x66 ,0x09]
+
         self.frame = [0x3D ,0xFF ,0x16 ,self.sn[0] ,self.sn[1] ,self.sn[2] ,self.sn[3] ,0x1F
             ,0xFC ,0x53 ,0x54 ,0x31 ,0x12 ,0x15 ,0x05 ,0x15 ,0x09
-            ,0x01 ,0x09 ,0x31 ,0x03 ,0x17 ,0x01 ,0x01 ,0x00 ,0x24
-            ,0x7F ,self.OMT ,self.key ,self.key ,0x28 ,0x8C ,0x17 ,0x03 ,0x19
-            ,0x04 ,0x03 ,0x55 ,0x02 ,0x01 ,0x32 ,0x00 ,0x00 ,0x00
-            ,0x01 ,self.adress ,0x00 ,0x03 ,0x17 ,0x04 ,0x22 ,0x11 ,0x10
-            ,0x0F ,0x4E ,0x20 ,0x13 ,0x88 ,0x82 ,0x64 ,0x66 ,0x09]
+            ,0x01 ,0x09 ,0x31 ,0x03 ,0x18 ,0x01 ,0x15 ,0x00 ,0x24
+            ,0x7F ,self.OMT ,self.key ,self.key ,0x28 ,0x8D ,0x17 ,0x00 ,0x24
+            ,0x04 ,0x03 ,0x55 ,0x02 ,0x11 ,0x35 ,0x00 ,0x00 ,0x00
+            ,0x01 ,self.adress ,0x00 ,0x03 ,0x18 ,0x01 ,0x15 ,0x12 ,0x10
+            ,0x0B ,0x4E ,0x20 ,0x13 ,0x88 ,0x82 ,0x64 ,0x66 ,0x09]
+
+        self.ack = [0x08 ,0xFF ,0x96 ,self.sn[0] ,self.sn[1] ,self.sn[2] ,self.sn[3] ,0x00, 0x00]
 
         #endregion
     def insert_timestamp_toFrame_bytes(self):
         self.frame[7:11] = pack_SN_or_timestamp(self.start_time_timestamp_rw_seconds)
 
     def add_timestamp_border(self):
-        self.nex_day_rw_seconds = self.start_time_timestamp_rw_seconds + 5 * 60
+        self.nex_day_rw_seconds = self.start_time_timestamp_rw_seconds + self.delta
 
     def create_new_border(self):
         self.start_time_timestamp_rw_seconds = self.GeneratePeriods.next_border_timestemp()
@@ -59,6 +71,21 @@ class Create_frames(object):
 
     def check_frame_timestamp(self,frame):
         return locate_unpack_timestamp(frame)
+    #
+    # def check_if_first_frame_send(self):
+    #     if self.first_frame:
+    #         self.insert_timestamp_toFrame_bytes()
+    #         self.Port_COM_Class.write(self.frame)
+    #         self.first_frame = False
+
+    def send_first_frame(self,frame_int_list):
+        if self.first_frame:
+            self.insert_timestamp_toFrame_bytes()
+            self.Port_COM_Class.write(self.frame)
+            self.first_frame = False
+        elif frame_int_list == self.ack and self.pom:
+            self.send_only_once = True
+            self.pom = False
 
     def check_if_time_to_send(self, frame_int_list):
         if self.is_propper_SN(frame_int_list):
@@ -67,16 +94,21 @@ class Create_frames(object):
                 self.insert_timestamp_toFrame_bytes()
                 self.Port_COM_Class.write(self.frame)
                 self.first_frame = False
-            # if self.check_frame_timestamp(frame_int_list) > self.start_time_timestamp_rw_seconds and self.send_only_once:  chyba niepotrzebny warunek
-            elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds:
+            elif frame_int_list == self.ack and self.first_frame_ack:
+                self.send_only_once = True
+                self.first_frame_ack = False
+                self.create_new_border()
+            elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds and self.send_only_once:
                 self.create_new_border()
                 self.Port_COM_Class.write(self.frame)
                 self.send_only_once = False
-            else:
+            elif frame_int_list == self.ack and self.send_only_once == False and self.first_frame_ack == False:
+                print("Zauwazono potwierdzenie odebrania dla podzielnika %r\n" % locate_unpack_SN(frame_int_list))
                 self.send_only_once = True
-                print("%r oczekuje wyzszego timestampa" %locate_unpack_SN(frame_int_list))
-        else:
-            print("poza")
+                # self.create_new_border()
+            else:
+                # self.send_only_once = True
+                print("\n%r oczekuje wyzszego timestampa - aktualnie %s" %(locate_unpack_SN(frame_int_list), time_inside_frame(frame_int_list)) )
 
 
 
