@@ -72,7 +72,7 @@ def locate_unpack_SN(int_tab):
     if temp_tab is not None:
         return unpack_four_bytes(temp_tab)
     else:
-        print("Zbyt krotka ramka - nie odczytano numeru SN")
+        # print("Zbyt krotka ramka - nie odczytano numeru SN")
         return None
 
 def locate_unpack_timestamp(int_tab):
@@ -80,7 +80,7 @@ def locate_unpack_timestamp(int_tab):
     if temp_tab is not None:
         return unpack_four_bytes(temp_tab)
     else:
-        print("Zbyt krotka ramka - nie znaleziono timestampa")
+        # print("Zbyt krotka ramka - nie znaleziono timestampa")
         return None
 
 def pack_SN_or_timestamp(integer):

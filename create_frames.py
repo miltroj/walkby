@@ -89,7 +89,7 @@ class Create_frames(object):
             self.pom = False
 
     def check_if_time_to_send(self, frame_int_list):
-        if self.is_propper_SN(frame_int_list) and is_propper_frame_type(frame_int_list):
+        if self.is_propper_SN(frame_int_list):
 
             if self.first_frame:
                 print("\n         WYSLANIE RAMKI PO RAZ PIERWSZY\n")
@@ -101,7 +101,7 @@ class Create_frames(object):
                 self.first_frame_ack = False
                 # self.create_new_border()
                 print("\n         ODEBRANIE RAMKI OD PIERWSZEJ PO ACK\n")
-            elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds and self.send_only_once:
+            elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds and self.send_only_once and is_propper_frame_type(frame_int_list):
                 self.create_new_border()
                 self.Port_COM_Class.write(self.frame)
                 self.send_only_once = False
@@ -149,3 +149,5 @@ if __name__ == "__main__":
     # print(int_to_hex_string_(create_frame.frame))
 
     print(create_frame.frame[28:30])
+
+    print(is_propper_frame_type(list_of_bytes))
