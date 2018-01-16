@@ -58,6 +58,7 @@ class Create_frames(object):
         self.start_time_timestamp_rw_seconds = self.GeneratePeriods.next_border_timestemp()
         self.add_timestamp_border()
         self.insert_timestamp_toFrame_bytes()
+        print("\n         STWORZONO NOWE GRANICE WYSYLANIA start %r  stop %r\n" %(self.start_time_timestamp_rw_seconds,self.nex_day_rw_seconds))
 
 
     def is_propper_SN(self,frame):
@@ -88,27 +89,31 @@ class Create_frames(object):
             self.pom = False
 
     def check_if_time_to_send(self, frame_int_list):
-        if self.is_propper_SN(frame_int_list):
+        if self.is_propper_SN(frame_int_list) and is_propper_frame_type(frame_int_list):
 
             if self.first_frame:
+                print("\n         WYSLANIE RAMKI PO RAZ PIERWSZY\n")
                 self.insert_timestamp_toFrame_bytes()
                 self.Port_COM_Class.write(self.frame)
                 self.first_frame = False
             elif frame_int_list == self.ack and self.first_frame_ack:
                 self.send_only_once = True
                 self.first_frame_ack = False
-                self.create_new_border()
+                # self.create_new_border()
+                print("\n         ODEBRANIE RAMKI OD PIERWSZEJ PO ACK\n")
             elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds and self.send_only_once:
                 self.create_new_border()
                 self.Port_COM_Class.write(self.frame)
                 self.send_only_once = False
+                print("\n         WYSLANIE RAMKI OD WYGENEROWANEJ\n")
             elif frame_int_list == self.ack and self.send_only_once == False and self.first_frame_ack == False:
                 print("Zauwazono potwierdzenie odebrania dla podzielnika %r\n" % locate_unpack_SN(frame_int_list))
                 self.send_only_once = True
                 # self.create_new_border()
+                print("\n         ODEBRANIE RAMKI OD WYGENEROWANEJ PO ACK\n")
             else:
                 # self.send_only_once = True
-                print("\n%r oczekuje wyzszego timestampa - aktualnie %s" %(locate_unpack_SN(frame_int_list), time_inside_frame(frame_int_list)) )
+                print("%r oczekuje wyzszego timestampa - aktualnie %s\n" %(locate_unpack_SN(frame_int_list), time_inside_frame(frame_int_list)) )
 
 
 

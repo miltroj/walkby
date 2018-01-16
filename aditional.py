@@ -132,6 +132,13 @@ def log_to_file_read(func):
         return temp_func_return
     return func_wrapper
 
+def is_propper_frame_type(frame_list):
+    if type(frame_list) is list and len(frame_list) >= 3 and frame_list[2]==0x0B:
+        return True
+    else:
+        return False
+
+
 if __name__ == "__main__":
 
     frame_sample = '3E A2 0B 77 35 EE 6E 21 E9 E5 65 31 12 06 F0 10 E6 00 12 FB FC 00 DB DB 10 5B 10 6D 00 50 00 00 84 80 00 33 10 10 10 00 00 00 23 00 00 00 10 04 10 2B 00 00 3C 00 02 00 01 E9 10 E8 10 00 A0'
