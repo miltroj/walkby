@@ -106,12 +106,15 @@ def is_propper_SN_in_the_list(frame , SN_list):
     else:
         return False
 
+def secods_to_datetime(int_timestamp):
+    return (data_time_zero() + datetime.timedelta(seconds=int_timestamp)).strftime("%Y-%m-%d %H:%M:%S")
+
 def time_inside_frame(list_of_bytes):
     temp_time_int = locate_unpack_timestamp(list_of_bytes)
     if temp_time_int is None:
         return ''
     else:
-        return (data_time_zero() + datetime.timedelta(seconds=temp_time_int)).strftime("%Y-%m-%d %H:%M:%S") + " | "
+        return secods_to_datetime(temp_time_int) + " | "
 
 
 def log_to_file_write(func):

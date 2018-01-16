@@ -15,6 +15,13 @@ class Create_frames(object):
         self.GeneratePeriods = Generate_time(*args)
         self.Port_COM_Class = Port_COM_class
 
+        self.frame_already_send =[]
+        #timeout dla ramki pierwszej
+        self.actula_timeout_first_frame = 0
+        #timeout dla ramki regularnej
+        self.actula_timeout = 0
+        self.ACK_timeout = 11
+
         self.send_only_once = False
         self.first_frame = True
         self.first_frame_ack=True
@@ -58,7 +65,8 @@ class Create_frames(object):
         self.start_time_timestamp_rw_seconds = self.GeneratePeriods.next_border_timestemp()
         self.add_timestamp_border()
         self.insert_timestamp_toFrame_bytes()
-        print("\n         STWORZONO NOWE GRANICE WYSYLANIA start %r  stop %r\n" %(self.start_time_timestamp_rw_seconds,self.nex_day_rw_seconds))
+        print("\n         STWORZONO NOWE GRANICE WYSYLANIA start %r  stop %r\n"
+              %(secods_to_datetime(self.start_time_timestamp_rw_seconds),secods_to_datetime(self.nex_day_rw_seconds)))
 
 
     def is_propper_SN(self,frame):
@@ -88,6 +96,20 @@ class Create_frames(object):
             self.send_only_once = True
             self.pom = False
 
+    def check_ACK_timeout_first_frame(self):
+        self.actula_timeout_first_frame += 1
+        if self.actula_timeout_first_frame > self.ACK_timeout:
+            self.first_frame = True
+            self.actula_timeout_first_frame = 0
+            print("\n         WYSTAPIL TIMEOUT OD RAMKI GLOWNEJ\n")
+
+    def check_ACK_timeout_general_frame(self):
+        self.actula_timeout += 1
+        if self.actula_timeout > self.ACK_timeout:
+            self.send_only_once = True
+            self.actula_timeout = 0
+            print("\n         WYSTAPIL TIMEOUT OD RAMKI PIERWSZEJ\n")
+
     def check_if_time_to_send(self, frame_int_list):
         if self.is_propper_SN(frame_int_list):
 
@@ -110,7 +132,13 @@ class Create_frames(object):
                 print("Zauwazono potwierdzenie odebrania dla podzielnika %r\n" % locate_unpack_SN(frame_int_list))
                 self.send_only_once = True
                 # self.create_new_border()
-                print("\n         ODEBRANIE RAMKI OD WYGENEROWANEJ PO ACK\n")
+                print("\n         ODEBRANIE RAMKI PO ACK OD WYGENEROWANEJ\n" )
+            elif frame_int_list != self.ack and self.first_frame_ack:
+                print("\n         ODEBRANIE RAMKI CZEKAM NA ACK PIERWSZEJ - JESZCZE %r\n" %(self.ACK_timeout-self.actula_timeout_first_frame))
+                self.check_ACK_timeout_first_frame()
+            elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds and self.send_only_once == False and is_propper_frame_type(frame_int_list):
+                print("\n         ODEBRANIE RAMKI CZEKAM NA ACK - JESZCZE %r\n" %(self.ACK_timeout-self.actula_timeout))
+                self.check_ACK_timeout_general_frame()
             else:
                 # self.send_only_once = True
                 print("%r oczekuje wyzszego timestampa - aktualnie %s\n" %(locate_unpack_SN(frame_int_list), time_inside_frame(frame_int_list)) )
