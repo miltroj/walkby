@@ -4,6 +4,7 @@ from generate_time_perdiods import *
 class Create_frames(object):
 
     def __init__(self,int_SN, start_time, Port_COM_class=None):
+        #region INITIALS
         self.delta = 5*60 #
         self.sn = pack_SN_or_timestamp(int_SN)
         self.start_time_timestamp_rw_seconds = form_timestamp_from_dtime(  start_time )
@@ -22,10 +23,10 @@ class Create_frames(object):
         self.actula_timeout = 0
         self.ACK_timeout = 11
 
-        self.send_only_once = False
+        self.generate_and_send_frame = False
         self.first_frame = True
         self.first_frame_ack=True
-
+        #endregion
         #region FRAME
 
         # self.frame = [0x3D ,0xFF ,0x16 ,self.sn[0] ,self.sn[1] ,self.sn[2] ,self.sn[3] ,0x20
@@ -78,23 +79,52 @@ class Create_frames(object):
         else:
             return False
 
+    def reset_ACK_timeout(self):
+        self.actula_timeout = 0
+
     def check_frame_timestamp(self,frame):
         return locate_unpack_timestamp(frame)
-    #
-    # def check_if_first_frame_send(self):
-    #     if self.first_frame:
-    #         self.insert_timestamp_toFrame_bytes()
-    #         self.Port_COM_Class.write(self.frame)
-    #         self.first_frame = False
+    
+    def remamber_previous_frame(self):
+        self.frame_already_send = self.frame
 
-    def send_first_frame(self,frame_int_list):
+    def send_first_frame_and_wait_for_ACK(self,frame_int_list):
         if self.first_frame:
+            print("\n         WYSLANIE RAMKI PO RAZ PIERWSZY\n")
             self.insert_timestamp_toFrame_bytes()
             self.Port_COM_Class.write(self.frame)
             self.first_frame = False
-        elif frame_int_list == self.ack and self.pom:
-            self.send_only_once = True
-            self.pom = False
+        elif frame_int_list == self.ack and self.first_frame_ack:
+            self.generate_and_send_frame = True
+            self.first_frame_ack = False
+            print("\n         ODEBRANIE RAMKI OD PIERWSZEJ PO ACK\n")
+
+    def generate_and_write_frame(self,frame_int_list):
+        tmp_timestamp_from_frame = self.check_frame_timestamp(frame_int_list)
+        if tmp_timestamp_from_frame > self.nex_day_rw_seconds and self.generate_and_send_frame and is_propper_frame_type(frame_int_list):
+            self.create_new_border()
+            self.Port_COM_Class.write(self.frame)
+            self.generate_and_send_frame = False
+            print("\n         WYSLANIE RAMKI OD WYGENEROWANEJ\n")
+        elif frame_int_list == self.ack and self.generate_and_send_frame == False and self.first_frame_ack == False:
+            print("Zauwazono potwierdzenie odebrania dla podzielnika %r\n" % locate_unpack_SN(frame_int_list))
+            self.generate_and_send_frame = True
+            print("\n         ODEBRANIE RAMKI PO ACK OD WYGENEROWANEJ\n")
+
+    def ack_out_of_time(self,frame_int_list):
+        if frame_int_list != self.ack and self.first_frame_ack:
+            print("\n         ODEBRANIE RAMKI CZEKAM NA ACK PIERWSZEJ - JESZCZE %r\n" % (
+            self.ACK_timeout - self.actula_timeout_first_frame))
+            self.check_ACK_timeout_first_frame()
+        elif self.check_frame_timestamp(
+                frame_int_list) > self.nex_day_rw_seconds and self.generate_and_send_frame == False and is_propper_frame_type(
+                frame_int_list):
+            print("\n         ODEBRANIE RAMKI CZEKAM NA ACK - JESZCZE %r\n" % (self.ACK_timeout - self.actula_timeout))
+            self.check_ACK_timeout_general_frame()
+        else:
+            # self.generate_and_send_frame = True
+            print("%r oczekuje wyzszego timestampa - aktualnie %s\n" % (
+            locate_unpack_SN(frame_int_list), time_inside_frame(frame_int_list)))
 
     def check_ACK_timeout_first_frame(self):
         self.actula_timeout_first_frame += 1
@@ -106,42 +136,16 @@ class Create_frames(object):
     def check_ACK_timeout_general_frame(self):
         self.actula_timeout += 1
         if self.actula_timeout > self.ACK_timeout:
-            self.send_only_once = True
+            self.generate_and_send_frame = True
             self.actula_timeout = 0
             print("\n         WYSTAPIL TIMEOUT OD RAMKI PIERWSZEJ\n")
 
     def check_if_time_to_send(self, frame_int_list):
         if self.is_propper_SN(frame_int_list):
 
-            if self.first_frame:
-                print("\n         WYSLANIE RAMKI PO RAZ PIERWSZY\n")
-                self.insert_timestamp_toFrame_bytes()
-                self.Port_COM_Class.write(self.frame)
-                self.first_frame = False
-            elif frame_int_list == self.ack and self.first_frame_ack:
-                self.send_only_once = True
-                self.first_frame_ack = False
-                # self.create_new_border()
-                print("\n         ODEBRANIE RAMKI OD PIERWSZEJ PO ACK\n")
-            elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds and self.send_only_once and is_propper_frame_type(frame_int_list):
-                self.create_new_border()
-                self.Port_COM_Class.write(self.frame)
-                self.send_only_once = False
-                print("\n         WYSLANIE RAMKI OD WYGENEROWANEJ\n")
-            elif frame_int_list == self.ack and self.send_only_once == False and self.first_frame_ack == False:
-                print("Zauwazono potwierdzenie odebrania dla podzielnika %r\n" % locate_unpack_SN(frame_int_list))
-                self.send_only_once = True
-                # self.create_new_border()
-                print("\n         ODEBRANIE RAMKI PO ACK OD WYGENEROWANEJ\n" )
-            elif frame_int_list != self.ack and self.first_frame_ack:
-                print("\n         ODEBRANIE RAMKI CZEKAM NA ACK PIERWSZEJ - JESZCZE %r\n" %(self.ACK_timeout-self.actula_timeout_first_frame))
-                self.check_ACK_timeout_first_frame()
-            elif self.check_frame_timestamp(frame_int_list) > self.nex_day_rw_seconds and self.send_only_once == False and is_propper_frame_type(frame_int_list):
-                print("\n         ODEBRANIE RAMKI CZEKAM NA ACK - JESZCZE %r\n" %(self.ACK_timeout-self.actula_timeout))
-                self.check_ACK_timeout_general_frame()
-            else:
-                # self.send_only_once = True
-                print("%r oczekuje wyzszego timestampa - aktualnie %s\n" %(locate_unpack_SN(frame_int_list), time_inside_frame(frame_int_list)) )
+            self.send_first_frame_and_wait_for_ACK(frame_int_list)
+            self.generate_and_write_frame(frame_int_list)
+            self.ack_out_of_time(frame_int_list)
 
 
 
